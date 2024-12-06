@@ -2,7 +2,6 @@ import streamlit as st
 from streamlit_chat import message
 import os
 import time
-from logic2 import get_assistant_response, text_to_speech, speech_to_text
 from audio_recorder_streamlit import audio_recorder
 from streamlit_float import float_init
 import base64
