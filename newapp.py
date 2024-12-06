@@ -26,7 +26,7 @@ from langchain.chains import LLMChain
 from langchain_core.runnables import RunnablePassthrough
 from langchain_community.document_loaders import TextLoader
 import chardet
-
+import pysqlite3 as sqlite3
 
 load_dotenv()
 openai.api_key = st.secrets["OPENAI_API_KEY"]
