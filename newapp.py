@@ -29,8 +29,7 @@ import chardet
 
 
 load_dotenv()
-os.environ['OPENAI_API_KEY'] = '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'
-openai.api_key = os.environ['OPENAI_API_KEY']
+openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
 chat = ChatOpenAI(
