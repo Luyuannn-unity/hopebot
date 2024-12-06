@@ -1,0 +1,12 @@
+openai
+python-dotenv
+streamlit
+langchain
+langchain_openai
+langchain_core
+langchain_community
+chardet
+chromadb
+streamlit-chat
+audio-recorder-streamlit
+streamlit-float
