@@ -10,3 +10,4 @@ chromadb
 streamlit-chat
 audio-recorder-streamlit
 streamlit-float
+pysqlite3
