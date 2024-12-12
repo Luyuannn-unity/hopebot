@@ -28,6 +28,8 @@ from langchain_community.document_loaders import TextLoader
 import chardet
 import pysqlite3 as sqlite3
 import sys
+
+st.set_page_config(page_title="HopeBot: Your Mental Health Assistant", layout="wide")
 sys.modules["sqlite3"] = sqlite3
 load_dotenv()
 openai.api_key = st.secrets["OPENAI_API_KEY"]
@@ -46,33 +48,8 @@ with open(r'cleaned_data.txt', 'rb') as f:
 #    result = chardet.detect(f.read())
 #    encoding = result['encoding']
 
-"""
-# Load documents
-loader1 = TextLoader(r'cleaned_data.txt', encoding=encoding)
-pages1 = loader1.load_and_split()
-
-loader2 = TextLoader(r'mental_health_support.txt', encoding='utf-8')
-pages2 = loader2.load_and_split()
-
-loader3 = TextLoader("econ_example.txt", encoding="utf-8")
-pages3 = loader3.load_and_split()
-
-# Split documents into chunks
-text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=100)
-docs1 = text_splitter.split_documents(pages1)
-docs2 = text_splitter.split_documents(pages2)
-docs3 = text_splitter.split_documents(pages3)
-"""
-
 # Create embeddings
 embed_model = OpenAIEmbeddings()
-
-"""
-# Create vector stores and retrievers
-vectorstore1 = Chroma.from_documents(documents=docs1, embedding=embed_model, collection_name="cleaned_data_docs")
-vectorstore2 = Chroma.from_documents(documents=docs2, embedding=embed_model, collection_name="mental_health_docs")
-vectorstore3 = Chroma.from_documents(documents=docs3, embedding=embed_model, collection_name="econ_docs")
-"""
 
 # Create vector stores and retrievers
 #vectorstore1 = Chroma.from_documents(documents=docs1, embedding=embed_model, collection_name="cleaned_data_docs",persist_directory="cleaned_data")
@@ -185,9 +162,6 @@ def autoplay_audio(file_path: str):
     """
     st.markdown(md, unsafe_allow_html=True)
 # ------------------------------------------------------------------------------------------------------------------------------------------------logic2END
-
-# Set page config to reduce whitespace and use wide layout
-st.set_page_config(page_title="HopeBot: Your Mental Health Assistant", layout="wide")
 
 # Initialize Float feature
 float_init()
