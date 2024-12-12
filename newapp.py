@@ -46,6 +46,7 @@ with open(r'cleaned_data.txt', 'rb') as f:
 #    result = chardet.detect(f.read())
 #    encoding = result['encoding']
 
+"""
 # Load documents
 loader1 = TextLoader(r'cleaned_data.txt', encoding=encoding)
 pages1 = loader1.load_and_split()
@@ -61,14 +62,36 @@ text_splitter = RecursiveCharacterTextSplitter(chunk_size=2000, chunk_overlap=10
 docs1 = text_splitter.split_documents(pages1)
 docs2 = text_splitter.split_documents(pages2)
 docs3 = text_splitter.split_documents(pages3)
+"""
 
 # Create embeddings
 embed_model = OpenAIEmbeddings()
 
+"""
 # Create vector stores and retrievers
 vectorstore1 = Chroma.from_documents(documents=docs1, embedding=embed_model, collection_name="cleaned_data_docs")
 vectorstore2 = Chroma.from_documents(documents=docs2, embedding=embed_model, collection_name="mental_health_docs")
 vectorstore3 = Chroma.from_documents(documents=docs3, embedding=embed_model, collection_name="econ_docs")
+"""
+
+# Create vector stores and retrievers
+#vectorstore1 = Chroma.from_documents(documents=docs1, embedding=embed_model, collection_name="cleaned_data_docs",persist_directory="cleaned_data")
+#vectorstore1.persist()
+vectorstore1 = Chroma(
+    embedding_function=embed_model, 
+    persist_directory="cleaned_data"
+)
+ 
+#vectorstore2 = Chroma.from_documents(documents=docs2, embedding=embed_model, collection_name="mental_health_docs")
+vectorstore2 = Chroma(
+    embedding_function=embed_model, 
+    persist_directory="mental_health"
+)
+#vectorstore3 = Chroma.from_documents(documents=docs3, embedding=embed_model, collection_name="econ_docs")
+vectorstore3 = Chroma(
+    embedding_function=embed_model, 
+    persist_directory="econ"
+)
 
 retriever1 = vectorstore1.as_retriever(k=2)
 retriever2 = vectorstore2.as_retriever(k=2)
