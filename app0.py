@@ -87,7 +87,7 @@ Task 1: As a professional counsellor, you should begin by greeting the client wa
 
 Task 2: After the user agrees to use the PHQ-9, ask each question in turn. Accurately categorise the user's answers as options A, B, C or D. If the user's answer is not precise enough, ambiguous or cannot be accurately categorised, ask the user to provide a clearer answer to ensure that the most accurate answer is collected. If the user answers A, they get 0 points; B, 1 point; C, 2 points; and D, 3 points. Track the score cumulatively without displaying it, and move to Task 3 after completing the test.
 
-Task 3: You must tell the user of their answer ditribution. In the format: You scored X points. Here’s how each answer was interpreted: Question 1: X (X point), etc. And then sum each question's mark up, tell the user of their the total score in number on the PHQ-9. And provide the appropriate depression severity results. Provide appropriate advice based on the results. If the depression is severe, give your advice and also encourage the user to seek professional help and provide them with a UK telephone helpline or email address (no more than 2 contacts). Be sure to make it clear that you are a virtual mental health assistant, not a doctor, and that whilst you will offer help, you are not a substitute for professional medical advice.
+Task 3: You must first tell the user of their answer distribution. In the format: Here’s how each answer was interpreted: Question 1: X (X point), etc. Then sum each question's mark up, and tell the user of their total score in number on the PHQ-9. In the format: You scored X points. And provide the appropriate depression severity results. Provide appropriate advice based on the results. If the depression is severe, give your advice and also encourage the user to seek professional help and provide them with a UK telephone helpline or email address (no more than 2 contacts). Be sure to make it clear that you are a virtual mental health assistant, not a doctor, and that whilst you will offer help, you are not a substitute for professional medical advice.
 At the end you will need to provide a brief summary of your conversation, including the confusion raised by the user in Task 1, as well as their PHQ-9 test results, and your corresponding recommendations. You need to ask the user if they have any further questions about the result and answer them.
 
 Please maintain the demeanour of a professional psychologist at all times and show empathy in your interactions. Please keep your responses concise and avoid giving long, repetitive answers.
@@ -166,6 +166,7 @@ def autoplay_audio(file_path: str):
 # Float feature initialization
 float_init()
 
+# 初始化会话状态
 def initialize_session_state():
     if "messages" not in st.session_state:
         st.session_state.messages = [
@@ -174,44 +175,85 @@ def initialize_session_state():
 
 initialize_session_state()
 
-st.title("HopeBot: Your Mental Health Assistant🤖")
-st.title("HopeBot: Your Mental Health Assistant🤖")
+# 标题
+st.title("HopeBot: Your Mental Health Assistant 🤖")
 
-# Create footer container for the microphone
+# 语音识别功能
+def speech_to_text(audio_path):
+    with open(audio_path, "rb") as audio_file:
+        transcript = openai.audio.transcriptions.create(
+            model="whisper-1", response_format="text", file=audio_file
+        )
+    return transcript.strip()
+
+# 语音合成功能
+def text_to_speech(text):
+    response = openai.audio.speech.create(model="tts-1", voice="nova", input=text)
+    audio_path = "response_audio.mp3"
+    with open(audio_path, "wb") as f:
+        response.stream_to_file(audio_path)
+    return audio_path
+
+# 音频播放功能
+def autoplay_audio(file_path):
+    with open(file_path, "rb") as f:
+        data = f.read()
+    b64_audio = base64.b64encode(data).decode("utf-8")
+    st.markdown(
+        f"""
+        <audio autoplay>
+        <source src="data:audio/mp3;base64,{b64_audio}" type="audio/mp3">
+        </audio>
+        """,
+        unsafe_allow_html=True,
+    )
+
+# 浮动容器（用于麦克风）
+float_init()
 footer_container = st.container()
 with footer_container:
     audio_bytes = audio_recorder()
 
-
+# 显示聊天历史（使用气泡样式和头像）
 for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.write(message["content"])
+    with st.chat_message(message["role"], avatar="🤖" if message["role"] == "assistant" else "👤"):
+        st.markdown(
+            f"<p style='font-size: 24px; margin: 0;'>{message['content']}</p>",
+            unsafe_allow_html=True
+        )
 
+# 处理语音输入
 if audio_bytes:
-    # Write the audio bytes to a file
     with st.spinner("Transcribing..."):
-        webm_file_path = "temp_audio.mp3"
-        with open(webm_file_path, "wb") as f:
+        audio_path = "temp_audio.mp3"
+        with open(audio_path, "wb") as f:
             f.write(audio_bytes)
 
-        transcript = speech_to_text(webm_file_path)
+        transcript = speech_to_text(audio_path)
         if transcript:
+            # 添加用户消息
             st.session_state.messages.append({"role": "user", "content": transcript})
-            with st.chat_message("user"):
-                st.write(transcript)
-            os.remove(webm_file_path)
+            with st.chat_message("user", avatar="👤"):
+                st.markdown(
+                    f"<p style='font-size: 24px; margin: 0;'>{transcript}</p>",
+                    unsafe_allow_html=True
+                )
+            os.remove(audio_path)
 
+# 生成 HopeBot 回复
 if st.session_state.messages[-1]["role"] != "assistant":
-    with st.chat_message("assistant"):
+    with st.chat_message("assistant", avatar="🤖"):
         with st.spinner("Thinking🤔..."):
             final_response = get_assistant_response(st.session_state.messages)  # Passing session messages to the function
+            st.markdown(
+                f"<p style='font-size: 24px; margin: 0;'>{final_response}</p>",
+                unsafe_allow_html=True
+            )
         with st.spinner("HopeBot is speaking💬..."):    
             audio_file = text_to_speech(final_response)
             autoplay_audio(audio_file)
-        st.write(final_response)
         st.session_state.messages.append({"role": "assistant", "content": final_response})
         os.remove(audio_file)
 
-
-# Float the footer container and provide CSS to target it with
-footer_container.float("bottom: 0rem;") 
+# 浮动的麦克风按钮
+footer_container.float("bottom: 0rem;")
