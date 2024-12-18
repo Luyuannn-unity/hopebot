@@ -35,70 +35,68 @@ load_dotenv()
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
 
-chat = ChatOpenAI(
-    model="gpt-4o",
-    temperature=0.4,
-)
+import streamlit as st
+from langchain_community.chat_models import ChatOpenAI
+from langchain_community.vectorstores import Chroma
+from langchain_openai import OpenAIEmbeddings
+from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
+from langchain_core.messages import ChatMessageHistory
+import chardet
 
-with open(r'cleaned_data.txt', 'rb') as f:
-    result = chardet.detect(f.read())
-    encoding = result['encoding']
+# Function to initialize resources
+@st.cache_resource
+def initialize_resources():
+    # Chat model
+    chat = ChatOpenAI(
+        model="gpt-4o",
+        temperature=0.4,
+    )
 
-#with open(r'C:\Users\Bolin\Desktop\dataset\econ.txt', 'rb') as f:
-#    result = chardet.detect(f.read())
-#    encoding = result['encoding']
+    # Detect file encoding
+    with open(r'cleaned_data.txt', 'rb') as f:
+        result = chardet.detect(f.read())
+        encoding = result['encoding']
 
-# Create embeddings
-embed_model = OpenAIEmbeddings()
+    # Embedding model
+    embed_model = OpenAIEmbeddings()
 
-# Create vector stores and retrievers
-#vectorstore1 = Chroma.from_documents(documents=docs1, embedding=embed_model, collection_name="cleaned_data_docs",persist_directory="cleaned_data")
-#vectorstore1.persist()
-vectorstore1 = Chroma(
-    embedding_function=embed_model, 
-    persist_directory="cleaned_data"
-)
- 
-#vectorstore2 = Chroma.from_documents(documents=docs2, embedding=embed_model, collection_name="mental_health_docs")
-vectorstore2 = Chroma(
-    embedding_function=embed_model, 
-    persist_directory="mental_health"
-)
-#vectorstore3 = Chroma.from_documents(documents=docs3, embedding=embed_model, collection_name="econ_docs")
-vectorstore3 = Chroma(
-    embedding_function=embed_model, 
-    persist_directory="econ"
-)
+    # Vector stores
+    vectorstore1 = Chroma(
+        embedding_function=embed_model, 
+        persist_directory="cleaned_data"
+    )
+    vectorstore2 = Chroma(
+        embedding_function=embed_model, 
+        persist_directory="mental_health"
+    )
+    vectorstore3 = Chroma(
+        embedding_function=embed_model, 
+        persist_directory="econ"
+    )
 
-retriever1 = vectorstore1.as_retriever(k=2)
-retriever2 = vectorstore2.as_retriever(k=2)
-retriever3 = vectorstore3.as_retriever(k=2)
+    # Retrievers
+    retriever1 = vectorstore1.as_retriever(k=2)
+    retriever2 = vectorstore2.as_retriever(k=2)
+    retriever3 = vectorstore3.as_retriever(k=2)
 
+    # ChatPromptTemplate
+    question_answering_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", """
+            You are HopeBot, a professional psychotherapist specialising in Cognitive Behavioural Therapy (CBT)...
+            {context}"""),
+            MessagesPlaceholder(variable_name="messages"),
+        ]
+    )
 
-# Create ChatPromptTemplate
-chat_history = ChatMessageHistory()
+    # Create the LLM chain with the language model and the prompt
+    document_chain = LLMChain(llm=chat, prompt=question_answering_prompt)
 
-question_answering_prompt = ChatPromptTemplate.from_messages(
-    [
-        ("system", """
-         You are HopeBot, a professional psychotherapist specialising in Cognitive Behavioural Therapy (CBT). Your role is to focus on your clients' words and emotions, guiding them to reflect on their thoughts and behaviours through open-ended questions and guiding them through the PHQ-9 test. Always show empathy and understanding of their feelings and help them to recognise how their behaviour affects their emotions.Your responses should not be too long or presented in bullet point form, which is too mechanical, and all your responses should be spoken. If a customer comes to you for advice, give two or three at a time.
-You need to complete three tasks in turn:
-Task 1: As a professional counsellor, you should begin by greeting the client warmly and start a casual conversation asking about their current situation. Do not exceed 20 rounds of dialogue in this task and transition to introducing the PHQ-9 when appropriate, if the user states twice or more that they have nothing to share or when the dialogue up to 20 rounds, you must ask the user if they would like to take the PHQ-9 test and give a brief introduction to the PHQ-9, communicating that this can be seen as a tool to help understand their feelings and offer support.
+    # Return all initialized resources
+    return chat, retriever1, retriever2, retriever3, question_answering_prompt, document_chain
 
-Task 2: After the user agrees to use the PHQ-9, ask each question in turn. Accurately categorise the user's answers as options A, B, C or D. If the user's answer is not precise enough, ambiguous or cannot be accurately categorised, ask the user to provide a clearer answer to ensure that the most accurate answer is collected. If the user answers A, they get 0 points; B, 1 point; C, 2 points; and D, 3 points. Track the score cumulatively without displaying it, and move to Task 3 after completing the test.
-
-Task 3: You must first tell the user of their answer distribution. In the format: Here’s how each answer was interpreted: Question 1: X (X point), etc. Then sum each question's mark up, and tell the user of their total score in number on the PHQ-9. In the format: You scored X points. And provide the appropriate depression severity results. Provide appropriate advice based on the results. If the depression is severe, give your advice and also encourage the user to seek professional help and provide them with a UK telephone helpline or email address (no more than 2 contacts). Be sure to make it clear that you are a virtual mental health assistant, not a doctor, and that whilst you will offer help, you are not a substitute for professional medical advice.
-At the end you will need to provide a brief summary of your conversation, including the confusion raised by the user in Task 1, as well as their PHQ-9 test results, and your corresponding recommendations. You need to ask the user if they have any further questions about the result and answer them.
-
-Please maintain the demeanour of a professional psychologist at all times and show empathy in your interactions. Please keep your responses concise and avoid giving long, repetitive answers.
-Here is some additional background information to help guide your responses:\n\n{context}
-        """),
-        MessagesPlaceholder(variable_name="messages"),
-    ]
-)
-
-# Create the LLM chain with the language model and the prompt
-document_chain = LLMChain(llm=chat, prompt=question_answering_prompt)
+# Initialize resources (runs once and caches results)
+chat, retriever1, retriever2, retriever3, question_answering_prompt, document_chain = initialize_resources()
 
 # Function to process input and return the chatbot's response
 def get_assistant_response(messages):
