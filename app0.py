@@ -34,15 +34,6 @@ sys.modules["sqlite3"] = sqlite3
 load_dotenv()
 openai.api_key = st.secrets["OPENAI_API_KEY"]
 
-
-import streamlit as st
-from langchain_community.chat_models import ChatOpenAI
-from langchain_community.vectorstores import Chroma
-from langchain_openai import OpenAIEmbeddings
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_core.messages import ChatMessageHistory
-import chardet
-
 # Function to initialize resources
 @st.cache_resource
 def initialize_resources():
