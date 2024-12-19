@@ -138,20 +138,6 @@ def speech_to_text(audio_data):
         )
     return transcript
 
-def text_to_speech(input_text):
-    response = openai.audio.speech.create(
-        model="tts-1",
-        voice="nova",
-        input=input_text
-    )
-    # Stream audio data incrementally
-    st.markdown("<audio controls autoplay>", unsafe_allow_html=True)
-    for chunk in response.iter_chunks():
-        b64_chunk = base64.b64encode(chunk).decode("utf-8")
-        st.markdown(f'<source src="data:audio/mp3;base64,{b64_chunk}" type="audio/mp3">', unsafe_allow_html=True)
-
-    st.markdown("</audio>", unsafe_allow_html=True)
-
 def autoplay_audio(file_path: str):
     with open(file_path, "rb") as f:
         data = f.read()
@@ -191,7 +177,7 @@ def speech_to_text(audio_path):
 def text_to_speech(text):
     response = openai.audio.speech.create(model="tts-1", voice="nova", input=text)
     audio_path = "response_audio.mp3"
-    with open(temp_audio, "wb") as f:
+    with open(audio_path, "wb") as f:
         for chunk in response.iter_chunks():
             f.write(chunk)
 
