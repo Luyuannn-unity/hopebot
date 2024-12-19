@@ -144,10 +144,13 @@ def text_to_speech(input_text):
         voice="nova",
         input=input_text
     )
-    webm_file_path = "temp_audio_play.mp3"
-    with open(webm_file_path, "wb") as f:
-        response.stream_to_file(webm_file_path)
-    return webm_file_path
+    # Stream audio data incrementally
+    st.markdown("<audio controls autoplay>", unsafe_allow_html=True)
+    for chunk in response.iter_chunks():
+        b64_chunk = base64.b64encode(chunk).decode("utf-8")
+        st.markdown(f'<source src="data:audio/mp3;base64,{b64_chunk}" type="audio/mp3">', unsafe_allow_html=True)
+
+    st.markdown("</audio>", unsafe_allow_html=True)
 
 def autoplay_audio(file_path: str):
     with open(file_path, "rb") as f:
@@ -252,8 +255,8 @@ if st.session_state.messages[-1]["role"] != "assistant":
                 unsafe_allow_html=True
             )
         with st.spinner("HopeBot is speaking💬..."):    
-            audio_file = text_to_speech(final_response)
-            autoplay_audio(audio_file)
+            text_to_speech(final_response)
+            # autoplay_audio(audio_file)
         st.session_state.messages.append({"role": "assistant", "content": final_response})
         os.remove(audio_file)
 
