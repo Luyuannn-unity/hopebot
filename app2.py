@@ -188,8 +188,12 @@ def speech_to_text(audio_path):
 def text_to_speech(text):
     response = openai.audio.speech.create(model="tts-1", voice="nova", input=text)
     audio_path = "response_audio.mp3"
-    with open(audio_path, "wb") as f:
-        response.stream_to_file(audio_path)
+    with open(temp_audio, "wb") as f:
+        for chunk in response.iter_chunks():
+            f.write(chunk)
+
+    # Display HTML audio player in Streamlit
+    st.audio(temp_audio)
     return audio_path
 
 # 音频播放功能
